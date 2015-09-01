@@ -66,13 +66,16 @@ addAcquisto <- function(asta, squadra, nome, prezzo, quotazioni){
     q <- quotazioni
   quotaNome <- q[grepl(upperNome, toupper(q$Calciatore)), ]
   if(nrow(quotaNome) != 1){
-    stop(paste("Nome calciatore ambiguo: ", quotaNome$Calciatore, "\n"))
+    quotaNome <- q[grepl(paste("^", upperNome, "$", sep = ""), toupper(q$Calciatore)), ]
+    if(nrow(quotaNome) != 1){
+      stop(paste("Nome calciatore ambiguo: ", quotaNome$Calciatore, "\n"))
+    }
   }
   calciatore <- as.character(quotaNome$Calciatore)
   # check name not exist yet
   if(calciatore %in% asta$Calciatore)
   {
-    stop(paste(" Calciatore gi? venduto a ", as.character(asta[asta$Calciatore == calciatore, "Fantasquadra"])))
+    stop(paste(" Calciatore venduto a ", as.character(asta[asta$Calciatore == calciatore, "Fantasquadra"])))
   }
   # calculate prog number by role
   ruolo <- ordered(quotaNome$Ruolo, levels=c("P","D","C","A"))
