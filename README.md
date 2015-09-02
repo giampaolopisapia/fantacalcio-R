@@ -1,11 +1,13 @@
 # fantacalcio-R
-R set of functions to manage a fantacalcio
+Set of R functions to manage a fantacalcio.
 
 A project that collects a set of functions useful to manage a fantacalcio and analyze relevant data.
 
-For example you can load the list of players with their value from csv file (previously downloaded fromweb and adjusted).
+Up to now you can handle the market ("asta"), loading the "Gazzetta dello Sport" list of players with their value from the csv file available in the project, recording each player purchase, seeing a table view with all team purchases, checking the remaining credits, and so on. 
 
-Then you can record the market ("asta"), by recording each player purchase, seeing a table view with all team purchases, checking the remaining credits, and so on. 
+You can also see the list of players, ordered by their value, and filtered with the already purchased ones.
+
+The idea is to discover some key factor to make a winner team by analyzing the right data.
 
 ```
 > asta <- addAcquisto(asta, "Team A", "DE SANC", 120)
@@ -23,5 +25,12 @@ Team A
 2     P DE SANCTIS - 120           <NA>              <NA>
 3     P              440            320               320
 4  <NA>              440            320               320
+> bestQuote(q, ruolo="P", 5, asta)
+    Calciatore Ruolo   Squadra Quota
+240 HANDANOVIC     P     INTER    15
+55    BIZZARRI     P    CHIEVO    14
+418      PERIN     P     GENOA    14
+489 SORRENTINO     P   PALERMO    14
+530    VIVIANO     P SAMPDORIA    14
 ```
 

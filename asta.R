@@ -71,9 +71,10 @@ addAcquisto <- function(asta, squadra = ordered("Tugnella", "Pizzichettone", "Fa
     q <- quotazioni
   quotaNome <- q[grepl(upperNome, toupper(q$Calciatore)), ]
   if(nrow(quotaNome) != 1){
+    multipleName <- quotaNome
     quotaNome <- q[grepl(paste("^", upperNome, "$", sep = ""), toupper(q$Calciatore)), ]
     if(nrow(quotaNome) != 1){
-      stop(paste("Nome calciatore ambiguo: ", quotaNome$Calciatore, "\n"))
+      stop(paste("Nome calciatore ambiguo: ", multipleName$Calciatore, "\n"))
     }
   }
   calciatore <- as.character(quotaNome$Calciatore)
@@ -171,9 +172,10 @@ deleteAcquisto <- function(asta){
   asta
 }
 
-quotaSquadre <- function(df, num=25){
-  appo <- df[with(df, order(-Quota, Calciatore)), ]
+quotaSquadre <- function(asta, num=25){
+  appo <- asta[with(asta, order(-Quota, Calciatore)), ]
   appo <- tapply(appo$Quota, appo$Fantasquadra, function(x) c( sum(x[1:num], na.rm=TRUE)))
+  barplot(appo, las=2)
   appo
 }
 
