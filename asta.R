@@ -45,11 +45,15 @@ bestQuote <- function(quote, ruolo, num=10, asta){
   else{
     dfdifference <- quote
   }
-  sub <- dfdifference[dfdifference$Ruolo %in% ruolo, ]
-  if(nrow(sub) < num | num == 0){
-    num = nrow(sub)
+  if(!missing(ruolo))
+    dfdifference <- dfdifference[dfdifference$Ruolo %in% ruolo, ]
+#  if(!missing(squadra) | squadra != "ALL")
+#    dfdifference <- dfdifference[dfdifference$Squadra %in% squadra, ]
+  
+  if(nrow(dfdifference) < num | num == 0){
+    num = nrow(dfdifference)
   }
-  sub <- sub[with(sub, order(-Quota, Calciatore)), ]
+  sub <- dfdifference[with(dfdifference, order(-Quota, Calciatore)), ]
   sub[1:num,]
 }
 
@@ -58,7 +62,8 @@ insertRow <- function(df, newrow){
   df
 }
 
-addAcquisto <- function(asta, squadra, nome, prezzo, quotazioni){
+addAcquisto <- function(asta, squadra = ordered("Tugnella", "Pizzichettone", "Fantocci"), 
+                        nome, prezzo, quotazioni){
   upperNome <- toupper(nome)
   if(missing(quotazioni))
     q <- loadQuotazioni()
@@ -102,7 +107,8 @@ addAcquisto <- function(asta, squadra, nome, prezzo, quotazioni){
 }
 
 residui <- function(asta){
-  res <- tapply(asta$Prezzo, asta$Fantasquadra, function(x) 2000 - sum(x))
+  astaorder <- asta[with(asta, order(Fantasquadra)), ]
+  res <- tapply(astaorder$Prezzo, astaorder$Fantasquadra, function(x) 2000 - sum(x))
   res
 }
 
@@ -126,23 +132,21 @@ viewTabellone <- function(asta){
   tabella
 }
 
-viewTabellone2 <- function(asta, subtot = FALSE){
+viewSubtot <- function(asta){
   asta$newcol <- apply(asta,1,function(row) paste( row[3] , row[5], sep = " - "  ))
-  asta.m1 <- melt(asta, id=c("Ruolo", "Prog", "Fantasquadra"), measure.vars = c("newcol") )
-  asta.m2 <- melt(asta, id=c("Ruolo", "Prog", "Fantasquadra"), measure.vars = c("Prezzo") )
-  colnames(asta.m1) <- c("Ruolo", "Prog", "Fantasquadra", "variable2", "value2")
-  asta.m <- merge(asta.m1, asta.m2)
+  asta.m <- melt(asta, id=c("Ruolo", "Prog", "Fantasquadra"), measure.vars = c("newcol") )
   asta.m <- as.data.frame(unclass(asta.m))
-  if(subtot){
-    #c("Ruolo", "grand_row")
-    tabellone <- cast(asta.m, Ruolo + Prog ~ Fantasquadra, value = "value2", fun.aggregate=sumprezzo, margins=TRUE)
-  }
-  else{
-    tabellone <- cast(asta.m, Ruolo + Prog ~ Fantasquadra, value = "value2")
-  }
+  tabellone <- cast(asta.m, Ruolo + Prog ~ Fantasquadra)
   tabella <- tabellone[,c(1,3:ncol(tabellone))]
-  View(tabella)
-  tabella
+  # aggregate prezzo by ruolo
+  ag <- aggregate(tabella[2:ncol(tabella)], by=tabella["Ruolo"], sumprezzo, na.rm=TRUE)
+  # add total
+  #ag[(nrow(ag) + 1), 2:ncol(tabella)] <- colSums(ag[, 2:ncol(tabella)], na.rm=TRUE)
+  # cast to char for rbind
+  ag[, 2:ncol(ag)] <- convert.magic(ag[, 2:ncol(ag)], "character")
+  barplot(as.matrix(ag[,-1]), main="Budget/ruolo",
+             las = 2,  col=terrain.colors(nrow(ag)))
+  ag
 }
 
 sumprezzo <- function(x, na.rm=TRUE){
