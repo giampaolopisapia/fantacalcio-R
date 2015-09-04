@@ -1,4 +1,4 @@
-loadQuotazioni <- function(file = "quotazioniFantagazzetta1Giornata.csv") {
+loadQuotazioni <- function(file = "quotazioniFantagazzetta2Giornata.csv") {
   quotazioni <- read.csv(paste("Dataset", file, sep="/") , sep = ";", stringsAsFactors=FALSE, 
                          header = TRUE, 
                            quote = "")
@@ -15,6 +15,7 @@ initAsta <- function() {
                      Squadra=character(),
                      Prezzo=integer(),
                      Quota=integer(),
+                     Primavera=character(),
                      Prog=integer(), stringsAsFactors = F)
   
   asta
@@ -34,7 +35,7 @@ saveAsta <- function(df, file = "AstaIniziale2015_16.csv") {
               col.names=TRUE, quote=FALSE, sep=";")
 }
 
-bestQuote <- function(quote, ruolo, num=10, asta){
+bestQuote <- function(quote, ruolo, num=10, asta, primavera){
   if(!missing(asta)){
     asta$EXTRACOL <- 1 # use a column name that is not present among 
     merged <- merge(quote, asta[, c("Calciatore", "EXTRACOL")], by = "Calciatore", all=TRUE)
@@ -47,6 +48,8 @@ bestQuote <- function(quote, ruolo, num=10, asta){
   }
   if(!missing(ruolo))
     dfdifference <- dfdifference[dfdifference$Ruolo %in% ruolo, ]
+  if(!missing(primavera))
+    dfdifference <- dfdifference[dfdifference$Primavera == "Si", ]
 #  if(!missing(squadra) | squadra != "ALL")
 #    dfdifference <- dfdifference[dfdifference$Squadra %in% squadra, ]
   
@@ -94,6 +97,7 @@ addAcquisto <- function(asta, squadra = ordered("Tugnella", "Pizzichettone", "Fa
                        Squadra=as.character(quotaNome$Squadra), 
                        Prezzo=as.numeric(prezzo), 
                        Quota=quotaNome$Quota,
+                       Primavera=quotaNome$Primavera,
                        Prog=prog + 1)
   asta <- insertRow(asta, newrow)
   # check residui
@@ -114,7 +118,12 @@ residui <- function(asta){
 }
 
 viewTabellone <- function(asta){
-  asta$newcol <- apply(asta,1,function(row) paste( row[3] , row[5], sep = " - "  ))
+  asta$newcol <- apply(asta,1,function(row) {
+      if(row[7] == "Si") 
+        paste( "*", row[3] , "-", row[5], sep = " "  )
+    else
+      paste( row[3] , row[5], sep = " - "  )
+    })
   asta.m <- melt(asta, id=c("Ruolo", "Prog", "Fantasquadra"), measure.vars = c("newcol") )
   asta.m <- as.data.frame(unclass(asta.m))
   tabellone <- cast(asta.m, Ruolo + Prog ~ Fantasquadra)
@@ -181,4 +190,17 @@ quotaSquadre <- function(asta, num=25){
 
 findCalciatore <- function(quote, nome)  {
   quote[grep(nome, quote$Calciatore),]
+}
+
+updatePrimavera <- function(asta, calciatore, primavera="No"){
+  if(primavera != "Si" & primavera != "No"){
+    stop("Variable primavera deve essere Si o No")
+  }
+  upperNome <- toupper(calciatore)
+  asta[grepl(upperNome, toupper(asta$Calciatore)), ]$Primavera <- primavera
+  asta
+}
+
+selectPrimavera <- function(asta){
+  asta[asta$Primavera == "Si",]
 }
